@@ -19,6 +19,8 @@ with open('seen_tweets.txt', 'r') as f:
 TWITTER_USER_ID = ""
 DID = ""
 BEARER = ""
+PDS = ""
+
 with open('.config', 'r') as f:
     if not f.readable():
         print('no config')
@@ -34,6 +36,8 @@ with open('.config', 'r') as f:
             DID = val
         elif key == "BEARER":
             BEARER = val
+        elif key == "PDS":
+            PDS = val
 
 if [TWITTER_USER_ID, DID, BEARER].count("") > 0:
     print("config not set properly")
@@ -48,7 +52,7 @@ def post_tweet_to_bluseky(tweet):
         if not payload["record"].get("embed"):
             payload["record"]["embed"] = {"$type": "app.bsky.embed.images", "images": []}
             payload["record"]["embed"]["images"].append({"image": attachment["blob"], "alt": ""})
-    res = requests.post('https://bsky.social/xrpc/com.atproto.repo.createRecord', headers={"authorization": f"Bearer {BEARER}"}, json=payload)
+    res = requests.post(f'https://{PDS}/xrpc/com.atproto.repo.createRecord', headers={"authorization": f"Bearer {BEARER}"}, json=payload)
     print(res.status_code, res.text)
 import uuid, io
 def twitter_to_bluesky_attachment(url, mime="application/octet-stream"):
@@ -58,7 +62,7 @@ def twitter_to_bluesky_attachment(url, mime="application/octet-stream"):
         print("download done")
         dat = io.BytesIO(r.raw.read())
         print("uploading")
-        with requests.post('https://bsky.social/xrpc/com.atproto.repo.uploadBlob', timeout=60, headers={"Authorization": f"Bearer {BEARER}", "Content-Type": f"{mime}"}, data=dat) as upload_res:
+        with requests.post(f'https://{PDS}/xrpc/com.atproto.repo.uploadBlob', timeout=60, headers={"Authorization": f"Bearer {BEARER}", "Content-Type": f"{mime}"}, data=dat) as upload_res:
             print(upload_res.text, upload_res.status_code)
             j = upload_res.json()
             print("upload done")
